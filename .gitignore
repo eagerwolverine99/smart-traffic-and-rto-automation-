@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Model weights
+*.pt
+*.caffemodel
+
+# Video files
+*.mp4
+
+# Output images
+driver_monitor/output/
+
+# Claude settings
+.claude/
+
+# Environment
+.env
+*.log

@@ -1,0 +1,17 @@
+# ── Core ─────────────────────────────────────────────────────────────────────
+ultralytics>=8.0.0          # YOLOv8 (vehicle detection)
+opencv-python>=4.8.0        # video/image I/O + Haar + DNN
+numpy>=1.24.0
+
+# ── Face detection backends (choose at least one) ─────────────────────────────
+# DNN (recommended, auto-downloaded) – no extra package needed
+# insightface + onnxruntime  →  pip install insightface onnxruntime  (RetinaFace)
+
+# ── Optional enhancements ─────────────────────────────────────────────────────
+# mediapipe>=0.10.0          # pose estimation
+# dlib>=19.24.0              # EAR drowsiness detection
+# face_recognition>=1.3.0   # face recognition (needs dlib + cmake)
+# Pillow>=10.0.0             # Colab inline display
+
+# ── Already bundled with OpenCV ───────────────────────────────────────────────
+# No extra install needed for Haar cascades or OpenCV DNN

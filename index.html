@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Traffic & RTO Automation Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="header-left">
+    <div class="logo-dot"></div>
+    <h1>Smart Traffic &amp; <span>RTO Automation</span> Dashboard</h1>
+  </div>
+  <div class="header-right">
+    <span class="badge">● LIVE</span>
+    <span class="timestamp" id="clock"></span>
+  </div>
+</header>
+
+<main>
+
+  <!-- ── FILTER BAR ── -->
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="setFilter('all',this)">All Vehicles</button>
+    <button class="filter-btn" onclick="setFilter('bike',this)">Bikes</button>
+    <button class="filter-btn" onclick="setFilter('car',this)">Cars</button>
+    <button class="filter-btn" onclick="setFilter('bus',this)">Buses</button>
+    <button class="filter-btn" onclick="setFilter('truck',this)">Trucks</button>
+    <div class="spacer"></div>
+    <input class="search-box" id="searchBox" placeholder="Search detections…" oninput="renderTable()" />
+  </div>
+
+  <!-- ── STAT CARDS ── -->
+  <div class="stats-row">
+    <div class="stat-card total">
+      <div class="label">Total Detected</div>
+      <div class="value" id="s-total">0</div>
+      <div class="sub" id="s-total-sub">vehicles today</div>
+      <div class="icon">🚦</div>
+    </div>
+    <div class="stat-card bikes">
+      <div class="label">Bikes</div>
+      <div class="value" id="s-bike">0</div>
+      <div class="sub" id="s-bike-pct">– of total</div>
+      <div class="icon">🏍️</div>
+    </div>
+    <div class="stat-card cars">
+      <div class="label">Cars</div>
+      <div class="value" id="s-car">0</div>
+      <div class="sub" id="s-car-pct">– of total</div>
+      <div class="icon">🚗</div>
+    </div>
+    <div class="stat-card buses">
+      <div class="label">Buses</div>
+      <div class="value" id="s-bus">0</div>
+      <div class="sub" id="s-bus-pct">– of total</div>
+      <div class="icon">🚌</div>
+    </div>
+    <div class="stat-card trucks">
+      <div class="label">Trucks</div>
+      <div class="value" id="s-truck">0</div>
+      <div class="sub" id="s-truck-pct">– of total</div>
+      <div class="icon">🚛</div>
+    </div>
+  </div>
+
+  <!-- ── ROW 1: flow chart + donut ── -->
+  <div class="grid-2" style="grid-template-columns: 2fr 1fr;">
+
+    <!-- Traffic Flow Chart -->
+    <div class="panel">
+      <div class="panel-header">
+        <h2><span class="dot"></span> Real-Time Traffic Flow</h2>
+        <span style="font-size:11px;color:var(--muted)">Last 60 seconds</span>
+      </div>
+      <div class="panel-body">
+        <div class="chart-wrap">
+          <canvas id="flowChart"></canvas>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#00aaff"></div>Bikes</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div>Cars</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#d29922"></div>Buses</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#f0883e"></div>Trucks</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Donut Distribution -->
+    <div class="panel">
+      <div class="panel-header">
+        <h2><span class="dot"></span> Vehicle Distribution</h2>
+      </div>
+      <div class="panel-body">
+        <div class="chart-wrap-sm">
+          <canvas id="donutChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ROW 2: camera feeds + congestion + detections ── -->
+  <div class="grid-3" style="grid-template-columns: 1fr 1fr 1.2fr;">
+
+    <!-- Camera Feeds -->
+    <div class="panel">
+      <div class="panel-header">
+        <h2><span class="dot"></span> Camera Feeds</h2>
+        <span style="font-size:11px;color:var(--muted)">4 active</span>
+      </div>
+      <div class="panel-body">
+        <div class="feeds-grid">
+          <div class="feed-item">
+            <canvas class="feed-canvas" id="cam1" width="160" height="100"></canvas>
+            <div class="feed-label">CAM-01</div>
+            <div class="feed-live">LIVE</div>
+            <div class="feed-count" id="cam1-count">—</div>
+          </div>
+          <div class="feed-item">
+            <canvas class="feed-canvas" id="cam2" width="160" height="100"></canvas>
+            <div class="feed-label">CAM-02</div>
+            <div class="feed-live">LIVE</div>
+            <div class="feed-count" id="cam2-count">—</div>
+          </div>
+          <div class="feed-item">
+            <canvas class="feed-canvas" id="cam3" width="160" height="100"></canvas>
+            <div class="feed-label">CAM-03</div>
+            <div class="feed-live">LIVE</div>
+            <div class="feed-count" id="cam3-count">—</div>
+          </div>
+          <div class="feed-item">
+            <canvas class="feed-canvas" id="cam4" width="160" height="100"></canvas>
+            <div class="feed-label">CAM-04</div>
+            <div class="feed-live">LIVE</div>
+            <div class="feed-count" id="cam4-count">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Congestion Zones -->
+    <div class="panel">
+      <div class="panel-header">
+        <h2><span class="dot"></span> Zone Congestion</h2>
+      </div>
+      <div class="panel-body">
+        <div class="zone-list" id="zoneList"></div>
+        <div style="margin-top:20px;">
+          <div class="panel-header" style="padding:0;border:none;margin-bottom:12px;">
+            <h2><span class="dot" style="background:var(--yellow)"></span> System Metrics</h2>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">AI Model</span>
+            <span class="metric-val ok">YOLOv8 Active</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Inference FPS</span>
+            <span class="metric-val" id="fps-val">24 fps</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Detection Accuracy</span>
+            <span class="metric-val ok">94.2%</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Frames Processed</span>
+            <span class="metric-val" id="frames-val">0</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">System Status</span>
+            <span class="metric-val ok">Operational</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Detections Table -->
+    <div class="panel">
+      <div class="panel-header">
+        <h2><span class="dot"></span> Recent Detections</h2>
+        <span style="font-size:11px;color:var(--muted)" id="det-count-label">—</span>
+      </div>
+      <div class="panel-body" style="padding:0; max-height:420px; overflow-y:auto;">
+        <table class="det-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Type</th>
+              <th>Zone</th>
+              <th>Confidence</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="detTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ROW 3: hourly bar + weekly heatmap ── -->
+  <div class="grid-2">
+
+    <!-- Hourly Bar -->
+    <div class="panel">
+      <div class="panel-header">
+        <h2><span class="dot"></span> Hourly Vehicle Count</h2>
+        <span style="font-size:11px;color:var(--muted)">Today</span>
+      </div>
+      <div class="panel-body">
+        <div class="chart-wrap">
+          <canvas id="hourlyChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly Density Heatmap -->
+    <div class="panel">
+      <div class="panel-header">
+        <h2><span class="dot"></span> Weekly Traffic Density</h2>
+        <span style="font-size:11px;color:var(--muted)">By hour &amp; day</span>
+      </div>
+      <div class="panel-body">
+        <div id="heatmapContainer"></div>
+        <div style="margin-top:12px; display:flex; align-items:center; gap:6px;">
+          <span style="font-size:10px;color:var(--muted)">Low</span>
+          <div style="display:flex;gap:2px;">
+            <div style="width:14px;height:14px;border-radius:2px;background:rgba(0,170,255,.1)"></div>
+            <div style="width:14px;height:14px;border-radius:2px;background:rgba(0,170,255,.25)"></div>
+            <div style="width:14px;height:14px;border-radius:2px;background:rgba(0,170,255,.45)"></div>
+            <div style="width:14px;height:14px;border-radius:2px;background:rgba(0,170,255,.65)"></div>
+            <div style="width:14px;height:14px;border-radius:2px;background:rgba(0,170,255,.9)"></div>
+          </div>
+          <span style="font-size:10px;color:var(--muted)">High</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>
